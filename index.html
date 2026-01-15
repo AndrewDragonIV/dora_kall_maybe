@@ -3,130 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STATION_CONTROL_v3</title>
+    <title>TERMINAL_v3</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=JetBrains+Mono&display=swap');
-        :root { --border: #1a1a1a; --bg: #000; --accent: #fff; }
-        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .border-v { border: 1px solid var(--border); }
-        .btn-transport { height: 64px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); transition: all 0.1s ease; }
-        .btn-transport:active { background: #fff; color: #000; }
-        input[type="range"] { -webkit-appearance: none; background: #1a1a1a; height: 2px; width: 100%; outline: none; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; background: #fff; border-radius: 0; cursor: pointer; }
-        select { background: #000; border: 1px solid var(--border); padding: 4px 8px; font-size: 10px; outline: none; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body { background: #000; color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; }
+        .border-v { border: 1px solid #1a1a1a; }
+        .text-gray { color: #555; }
     </style>
 </head>
-<body class="p-6">
-    <!-- Header: System Stats -->
-    <header class="flex justify-between items-start mb-12">
-        <div class="space-y-1">
-            <h1 class="text-sm font-semibold tracking-tighter uppercase">Broadcast_Node_01</h1>
-            <p class="text-[9px] mono text-zinc-500 uppercase">Status: <span id="sys-status" class="text-white">Standby</span></p>
+<body class="p-6 uppercase">
+
+    <header class="flex justify-between items-start mb-10">
+        <div>
+            <h1 class="text-lg font-bold tracking-tighter">BROADCAST_NODE_01</h1>
+            <p class="text-[9px] text-gray">STATUS: <span id="status-text" class="text-white">STANDBY</span></p>
         </div>
-        <div class="text-right space-y-1 text-[9px] mono text-zinc-500 uppercase">
+        <div class="text-right text-[9px] text-gray">
             <p>GPU_CORE: <span id="gpu-val" class="text-white">--%</span></p>
-            <p>QUEUE_INF: <span id="queue-val" class="text-white">0_UNITS</span></p>
+            <p>QUEUE_INF: <span id="q-val" class="text-white">--_UNITS</span></p>
         </div>
     </header>
 
-    <!-- Main Viewport: Track Info -->
-    <main class="mb-12">
-        <div class="border-v p-6 relative overflow-hidden">
-            <div class="absolute top-0 left-0 bg-white text-black text-[8px] px-2 py-0.5 mono font-bold uppercase">Now_Playing</div>
-            <div class="mt-4">
-                <p id="track-title" class="text-lg font-medium leading-tight tracking-tight h-14 overflow-hidden">SYSTEM_IDLE: AWAITING_COMMAND</p>
-                <div class="flex gap-4 mt-4 text-[9px] mono text-zinc-500">
-                    <p>RES: <span id="res-val" class="text-white">720P</span></p>
-                    <p>BTR: <span id="btr-val" class="text-white">3500K</span></p>
-                </div>
-            </div>
+    <main class="mb-10">
+        <div class="border-v p-6 relative">
+            <div class="absolute top-0 left-0 bg-white text-black text-[8px] px-2 font-bold uppercase">Now_Playing</div>
+            <p id="track-name" class="mt-2 text-sm font-bold truncate">AWAITING_COMMAND</p>
         </div>
     </main>
 
-    <!-- Transport Deck -->
-    <section class="grid grid-cols-4 gap-2 mb-12">
-        <button onclick="cmd('prev')" class="btn-transport col-span-1">
+    <!-- TRANSPORT -->
+    <div class="grid grid-cols-4 gap-2 mb-10">
+        <button onclick="send('prev')" class="border-v h-16 flex items-center justify-center active:bg-white active:text-black transition-colors">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6L18 18V6z"/></svg>
         </button>
-        <button id="main-action" onclick="togglePlay()" class="btn-transport col-span-2 bg-white text-black">
+        <button id="play-btn" onclick="togglePlay()" class="border-v h-16 col-span-2 flex items-center justify-center bg-white text-black active:scale-95 transition-transform">
             <svg id="play-icon" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
         </button>
-        <button onclick="cmd('next')" class="btn-transport col-span-1">
+        <button onclick="send('next')" class="border-v h-16 flex items-center justify-center active:bg-white active:text-black transition-colors">
             <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6z"/></svg>
         </button>
-    </section>
-
-    <!-- Console / Settings -->
-    <section class="space-y-6">
-        <div>
-            <div class="flex justify-between items-end mb-4">
-                <h3 class="text-[10px] mono text-zinc-500 uppercase tracking-widest">Encoder_Config</h3>
-                <span id="bitrate-label" class="text-[10px] mono">3500KBPS</span>
-            </div>
-            <input type="range" id="bitrate-input" min="1000" max="10000" step="500" value="3500" oninput="updateBitrateLabel(this.value)">
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <div class="flex flex-col gap-2">
-                <label class="text-[9px] mono text-zinc-500 uppercase">GPU_Preset</label>
-                <select id="preset-input">
-                    <option value="p1">P1_PERFORMANCE</option>
-                    <option value="p4" selected>P4_BALANCED</option>
-                    <option value="p7">P7_QUALITY</option>
-                </select>
-            </div>
-            <div class="flex flex-col gap-2 text-right">
-                <label class="text-[9px] mono text-zinc-500 uppercase">Engine_Control</label>
-                <button onclick="cmd('fetch')" class="text-[9px] border-v py-1 px-2 uppercase hover:bg-white hover:text-black">Update_Playlist</button>
-            </div>
-        </div>
-    </section>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.headerColor = '#000000';
-        tg.backgroundColor = '#000000';
+
+        // ПАРСИНГ ДАННЫХ ИЗ URL
+        const params = new URLSearchParams(window.location.search);
+        document.getElementById('gpu-val').innerText = (params.get('gpu') || '0') + '%';
+        document.getElementById('q-val').innerText = (params.get('q') || '0') + '_UNITS';
+        document.getElementById('track-name').innerText = params.get('track') || 'SYSTEM_READY';
 
         let isPlaying = false;
-
-        // Инициализация данных из URL
-        const params = new URLSearchParams(window.location.search);
-        document.getElementById('gpu-val').innerText = `${params.get('gpu') || 0}%`;
-        document.getElementById('queue-val').innerText = `${params.get('q') || 0}_UNITS`;
-        document.getElementById('track-title').innerText = params.get('track') || 'SYSTEM_READY';
-
-        function updateBitrateLabel(v) { document.getElementById('bitrate-label').innerText = `${v}KBPS`; }
-
-        function cmd(action) {
-            const payload = {
-                action: action,
-                config: {
-                    bitrate: document.getElementById('bitrate-input').value + 'k',
-                    preset: document.getElementById('preset-input').value
-                }
-            };
-            tg.sendData(JSON.stringify(payload));
-        }
 
         function togglePlay() {
             isPlaying = !isPlaying;
             const icon = document.getElementById('play-icon');
-            const btn = document.getElementById('main-action');
+            const btn = document.getElementById('play-btn');
             
             if(isPlaying) {
-                cmd('play');
+                send('play');
                 icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
                 btn.classList.remove('bg-white', 'text-black');
                 btn.classList.add('border-white');
+                document.getElementById('status-text').innerText = "STREAMING";
             } else {
-                cmd('stop');
+                send('stop');
                 icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
                 btn.classList.add('bg-white', 'text-black');
+                document.getElementById('status-text').innerText = "STANDBY";
             }
+        }
+
+        function send(action) {
+            tg.sendData(JSON.stringify({ action: action }));
         }
     </script>
 </body>
