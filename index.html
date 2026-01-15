@@ -3,102 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Stream Engine Terminal</title>
+    <title>TERMINAL</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
         body { background: #000; color: #fff; font-family: 'JetBrains Mono', monospace; }
-        .ui-card { border: 1px solid #222; background: #050505; }
-        .active-glow { box-shadow: 0 0 15px rgba(255,255,255,0.1); }
-        .btn-transport { border: 1px solid #333; transition: all 0.1s; }
-        .btn-transport:active { background: #fff; color: #000; }
+        .border-main { border: 1px solid #1a1a1a; }
+        .text-gray { color: #555; }
     </style>
 </head>
-<body class="p-4 uppercase">
-
-    <!-- Реальный мониторинг -->
-    <div class="grid grid-cols-2 gap-2 mb-6 text-[10px]">
-        <div class="ui-card p-3">
-            <p class="text-zinc-500 mb-1">// GPU_UTILIZATION</p>
-            <p class="text-lg" id="gpu-val">0%</p>
+<body class="p-6">
+    <div class="flex justify-between items-start mb-10">
+        <div>
+            <h1 class="text-xl font-bold tracking-tighter">STREAM_OS v3</h1>
+            <p class="text-[9px] text-gray">HARDWARE: NVIDIA GTX 1660 SUPER</p>
         </div>
-        <div class="ui-card p-3">
-            <p class="text-zinc-500 mb-1">// SYSTEM_BITRATE</p>
-            <p class="text-lg" id="bitrate-val">0K</p>
+        <button onclick="send('refresh')" class="text-[9px] border border-zinc-800 px-2 py-1 hover:bg-white hover:text-black">FETCH_NEW_CONTENT</button>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4 mb-10">
+        <div class="border-main p-4">
+            <p class="text-[9px] text-gray mb-1">// GPU_UTIL</p>
+            <p class="text-xl" id="gpu">0%</p>
         </div>
-    </div>
-
-    <!-- Ткущий трек -->
-    <div class="ui-card p-4 mb-6 active-glow">
-        <p class="text-[10px] text-zinc-500 mb-2">// NOW_PLAYING</p>
-        <marquee id="track-name" class="text-sm font-bold tracking-tighter">ОЖИДАНИЕ СИСТЕМЫ...</marquee>
-    </div>
-
-    <!-- ТРАНСПОРТНАЯ ПАНЕЛЬ (КНОПКИ) -->
-    <div class="grid grid-cols-3 gap-2 mb-8">
-        <button onclick="send('prev')" class="btn-transport py-6 flex justify-center items-center">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18V6h2v12H6zm3.5-6L18 18V6l-8.5 6z"/></svg>
-        </button>
-        
-        <button onclick="send('play')" id="play-btn" class="btn-transport py-6 flex justify-center items-center bg-white text-black">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-
-        <button onclick="send('next')" class="btn-transport py-6 flex justify-center items-center">
-            <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6v12z"/></svg>
-        </button>
-    </div>
-
-    <!-- Дополнительные настройки -->
-    <div class="space-y-4 mb-20">
-        <div class="ui-card p-4">
-            <p class="text-[10px] text-zinc-500 mb-4">// ENCODER_SETTINGS</p>
-            <div class="flex justify-between items-center mb-4 text-xs">
-                <span>NVENC_PRESET</span>
-                <select id="preset" class="bg-black border border-zinc-700 p-1">
-                    <option value="p1">P1_FAST</option>
-                    <option value="p4" selected>P4_BALANCED</option>
-                    <option value="p7">P7_QUALITY</option>
-                </select>
-            </div>
-            <input type="range" id="bitrate" min="1000" max="8000" class="w-full accent-white">
+        <div class="border-main p-4">
+            <p class="text-[9px] text-gray mb-1">// QUEUE_SIZE</p>
+            <p class="text-xl" id="queue">SEARCHING...</p>
         </div>
     </div>
 
-    <!-- Кнопка применить -->
-    <button onclick="apply()" class="fixed bottom-4 left-4 right-4 bg-zinc-100 text-black py-4 font-bold text-sm hover:bg-white transition-colors">
-        APPLY_CHANGES
-    </button>
+    <div class="border-main p-4 mb-10">
+        <p class="text-[9px] text-gray mb-2">// NOW_STREAMING</p>
+        <div class="overflow-hidden whitespace-nowrap">
+            <p id="track" class="text-sm font-bold tracking-tight italic">IDLE_BY_OPERATOR</p>
+        </div>
+    </div>
+
+    <!-- ТРАНСПОРТ -->
+    <div class="flex justify-between gap-2 mb-10">
+        <button onclick="send('prev')" class="flex-1 border-main py-8 flex justify-center hover:bg-zinc-900 active:bg-white active:text-black">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M6 18V6h2v12H6zm3.5-6L18 18V6l-8.5 6z"/></svg>
+        </button>
+        <button onclick="togglePlay()" id="play-btn" class="flex-[1.5] border-main py-8 flex justify-center bg-white text-black active:scale-95 transition-transform">
+            <svg id="play-icon" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button onclick="send('next')" class="flex-1 border-main py-8 flex justify-center hover:bg-zinc-900 active:bg-white active:text-black">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6v12z"/></svg>
+        </button>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.headerColor = '#000000';
 
-        // Парсим данные из URL, которые прислал бот
         const params = new URLSearchParams(window.location.search);
-        document.getElementById('gpu-val').innerText = (params.get('gpu') || '0') + '%';
-        document.getElementById('track-name').innerText = params.get('track') || 'IDLE';
-        document.getElementById('bitrate-val').innerText = (params.get('bitrate') || '3500') + 'K';
+        document.getElementById('gpu').innerText = (params.get('gpu') || '0') + '%';
+        document.getElementById('track').innerText = params.get('track') || 'NOT_STARTED';
+
+        let isPlaying = false;
+
+        function togglePlay() {
+            if(!isPlaying) {
+                send('play');
+                document.getElementById('play-icon').innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+                document.getElementById('play-btn').classList.remove('bg-white', 'text-black');
+                document.getElementById('play-btn').classList.add('border-white', 'text-white');
+            } else {
+                send('stop');
+                document.getElementById('play-icon').innerHTML = '<path d="M8 5v14l11-7z"/>';
+                document.getElementById('play-btn').classList.add('bg-white', 'text-black');
+            }
+            isPlaying = !isPlaying;
+        }
 
         function send(action) {
             tg.sendData(JSON.stringify({ action: action }));
-            if(action === 'play') {
-                document.getElementById('play-btn').innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>';
-                document.getElementById('play-btn').setAttribute('onclick', "send('stop')");
-            } else if (action === 'stop') {
-                document.getElementById('play-btn').innerHTML = '<svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
-                document.getElementById('play-btn').setAttribute('onclick', "send('play')");
-            }
-        }
-
-        function apply() {
-            const data = {
-                action: 'update',
-                bitrate: document.getElementById('bitrate').value + 'k',
-                preset: document.getElementById('preset').value
-            };
-            tg.sendData(JSON.stringify(data));
         }
     </script>
 </body>
