@@ -3,84 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>TERMINAL_v3</title>
+    <title>STATION_V4</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
-        body { background: #000; color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; }
-        .border-v { border: 1px solid #1a1a1a; }
-        .text-gray { color: #555; }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;800&family=Inter:wght@400;600&display=swap');
+        
+        :root { --bg: #050505; --card: #111; --border: #333; --accent: #fff; }
+        body { background: var(--bg); color: #e5e5e5; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; min-height: 100vh; display: flex; flex-direction: column; }
+        
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass { background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
+        .btn-main { background: #fff; color: #000; box-shadow: 0 0 20px rgba(255,255,255,0.1); transition: transform 0.1s; }
+        .btn-main:active { transform: scale(0.96); }
+        
+        /* Анимация статуса */
+        .blink { animation: pulser 2s infinite; }
+        @keyframes pulser { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
     </style>
 </head>
-<body class="p-6 uppercase">
+<body class="p-5 pb-10 justify-between">
 
-    <header class="flex justify-between items-start mb-10">
+    <!-- HEADER -->
+    <header class="flex justify-between items-start mb-8">
         <div>
-            <h1 class="text-lg font-bold tracking-tighter">BROADCAST_NODE_01</h1>
-            <p class="text-[9px] text-gray">STATUS: <span id="status-text" class="text-white">STANDBY</span></p>
+            <div class="flex items-center gap-2 mb-1">
+                <div id="status-dot" class="w-2 h-2 rounded-full bg-red-500"></div>
+                <span id="status-text" class="text-[10px] font-bold tracking-widest mono text-red-500">OFFLINE</span>
+            </div>
+            <h1 class="text-xl font-bold tracking-tighter leading-none">BROADCAST<br><span class="text-zinc-500">UNIT_01</span></h1>
         </div>
-        <div class="text-right text-[9px] text-gray">
-            <p>GPU_CORE: <span id="gpu-val" class="text-white">--%</span></p>
-            <p>QUEUE_INF: <span id="q-val" class="text-white">--_UNITS</span></p>
+        <div class="text-right mono text-[9px] text-zinc-500 space-y-1">
+            <p>GPU: <span id="gpu-val" class="text-white">--%</span></p>
+            <p>Q: <span id="q-val" class="text-white">--</span></p>
+            <p>UPTIME: <span id="uptime">00:00:00</span></p>
         </div>
     </header>
 
-    <main class="mb-10">
-        <div class="border-v p-6 relative">
-            <div class="absolute top-0 left-0 bg-white text-black text-[8px] px-2 font-bold uppercase">Now_Playing</div>
-            <p id="track-name" class="mt-2 text-sm font-bold truncate">AWAITING_COMMAND</p>
+    <!-- MAIN TRACK DISPLAY -->
+    <section class="mb-auto">
+        <div class="glass rounded-xl p-5 mb-6 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">
+                <svg width="40" height="40" fill="white" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            </div>
+            <p class="text-[9px] mono text-zinc-500 mb-2 uppercase">Current Sequence</p>
+            <div class="h-16 flex items-center">
+                <p id="track-name" class="text-lg font-bold leading-tight line-clamp-2 text-white">SYSTEM READY</p>
+            </div>
+            <div class="mt-4 flex gap-3">
+                <span class="text-[9px] bg-zinc-800 px-2 py-1 rounded text-zinc-300 mono">NVENC_P4</span>
+                <span class="text-[9px] bg-zinc-800 px-2 py-1 rounded text-zinc-300 mono">4000KBPS</span>
+            </div>
         </div>
-    </main>
+    </section>
 
-    <!-- TRANSPORT -->
-    <div class="grid grid-cols-4 gap-2 mb-10">
-        <button onclick="send('prev')" class="border-v h-16 flex items-center justify-center active:bg-white active:text-black transition-colors">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6L18 18V6z"/></svg>
-        </button>
-        <button id="play-btn" onclick="togglePlay()" class="border-v h-16 col-span-2 flex items-center justify-center bg-white text-black active:scale-95 transition-transform">
-            <svg id="play-icon" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-        <button onclick="send('next')" class="border-v h-16 flex items-center justify-center active:bg-white active:text-black transition-colors">
-            <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6z"/></svg>
-        </button>
+    <!-- DEBUG LOG (ДЛЯ ТЕБЯ) -->
+    <div id="debug-log" class="mb-4 text-[8px] mono text-zinc-600 h-10 overflow-hidden border-t border-zinc-900 pt-2">
+        > SYSTEM_INIT...
     </div>
+
+    <!-- CONTROLS -->
+    <section class="grid grid-cols-3 gap-3 h-20">
+        <button onclick="send('prev')" class="glass rounded-xl flex items-center justify-center active:bg-zinc-800 transition-colors">
+            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6L18 18V6z"/></svg>
+        </button>
+        
+        <button id="play-btn" onclick="togglePlay()" class="btn-main rounded-xl flex items-center justify-center">
+            <svg id="play-icon" width="28" height="28" fill="black" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        
+        <button onclick="send('next')" class="glass rounded-xl flex items-center justify-center active:bg-zinc-800 transition-colors">
+            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6z"/></svg>
+        </button>
+    </section>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.headerColor = '#000000';
+        tg.headerColor = '#050505';
+        tg.backgroundColor = '#050505';
 
-        // ПАРСИНГ ДАННЫХ ИЗ URL
+        // Инициализация
         const params = new URLSearchParams(window.location.search);
         document.getElementById('gpu-val').innerText = (params.get('gpu') || '0') + '%';
-        document.getElementById('q-val').innerText = (params.get('q') || '0') + '_UNITS';
-        document.getElementById('track-name').innerText = params.get('track') || 'SYSTEM_READY';
-
+        document.getElementById('q-val').innerText = (params.get('q') || '0');
+        document.getElementById('track-name').innerText = params.get('track') || 'WAITING_FOR_CMD';
+        
         let isPlaying = false;
+        const logDiv = document.getElementById('debug-log');
+
+        function log(msg) {
+            logDiv.innerHTML = `> ${msg}<br>` + logDiv.innerHTML;
+        }
 
         function togglePlay() {
             isPlaying = !isPlaying;
             const icon = document.getElementById('play-icon');
-            const btn = document.getElementById('play-btn');
+            const dot = document.getElementById('status-dot');
+            const txt = document.getElementById('status-text');
             
-            if(isPlaying) {
+            if (isPlaying) {
                 send('play');
                 icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-                btn.classList.remove('bg-white', 'text-black');
-                btn.classList.add('border-white');
-                document.getElementById('status-text').innerText = "STREAMING";
+                dot.classList.remove('bg-red-500');
+                dot.classList.add('bg-green-500', 'blink');
+                txt.innerText = "BROADCASTING";
+                txt.classList.remove('text-red-500');
+                txt.classList.add('text-green-500');
             } else {
                 send('stop');
                 icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-                btn.classList.add('bg-white', 'text-black');
-                document.getElementById('status-text').innerText = "STANDBY";
+                dot.classList.add('bg-red-500');
+                dot.classList.remove('bg-green-500', 'blink');
+                txt.innerText = "OFFLINE";
+                txt.classList.add('text-red-500');
+                txt.classList.remove('text-green-500');
             }
         }
 
         function send(action) {
-            tg.sendData(JSON.stringify({ action: action }));
+            log(`SENDING_ACTION: ${action}`);
+            try {
+                tg.sendData(JSON.stringify({ action: action }));
+                log(`DATA_SENT_OK`);
+            } catch (e) {
+                log(`ERR: ${e.message}`);
+            }
         }
+
+        // Таймер аптайма
+        let seconds = 0;
+        setInterval(() => {
+            seconds++;
+            const date = new Date(0);
+            date.setSeconds(seconds);
+            document.getElementById('uptime').innerText = date.toISOString().substr(11, 8);
+        }, 1000);
     </script>
 </body>
 </html>
