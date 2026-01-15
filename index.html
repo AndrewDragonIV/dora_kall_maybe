@@ -3,142 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>STATION_V4</title>
+    <title>UNIT_01_CONSOLE</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;800&family=Inter:wght@400;600&display=swap');
-        
-        :root { --bg: #050505; --card: #111; --border: #333; --accent: #fff; }
-        body { background: var(--bg); color: #e5e5e5; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; min-height: 100vh; display: flex; flex-direction: column; }
-        
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .glass { background: rgba(20,20,20,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.08); }
-        .btn-main { background: #fff; color: #000; box-shadow: 0 0 20px rgba(255,255,255,0.1); transition: transform 0.1s; }
-        .btn-main:active { transform: scale(0.96); }
-        
-        /* Анимация статуса */
-        .blink { animation: pulser 2s infinite; }
-        @keyframes pulser { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;800&display=swap');
+        body { background: #000; color: #fff; font-family: 'JetBrains Mono', monospace; overflow: hidden; user-select: none; }
+        .b-v { border: 1px solid #1a1a1a; }
+        .active-btn { background: #fff !important; color: #000 !important; }
+        .status-line { height: 2px; width: 100%; background: #111; overflow: hidden; }
+        .status-progress { height: 100%; width: 30%; background: #fff; animation: move 2s linear infinite; }
+        @keyframes move { from { margin-left: -30%; } to { margin-left: 100%; } }
     </style>
 </head>
-<body class="p-5 pb-10 justify-between">
-
-    <!-- HEADER -->
-    <header class="flex justify-between items-start mb-8">
-        <div>
-            <div class="flex items-center gap-2 mb-1">
-                <div id="status-dot" class="w-2 h-2 rounded-full bg-red-500"></div>
-                <span id="status-text" class="text-[10px] font-bold tracking-widest mono text-red-500">OFFLINE</span>
-            </div>
-            <h1 class="text-xl font-bold tracking-tighter leading-none">BROADCAST<br><span class="text-zinc-500">UNIT_01</span></h1>
+<body class="p-6 flex flex-col h-screen justify-between">
+    <header class="flex justify-between items-start">
+        <div class="space-y-1">
+            <h1 class="text-sm font-extrabold tracking-tighter uppercase">Broadcast.Node.01</h1>
+            <p class="text-[9px] text-zinc-600 uppercase" id="state-text">System_Standby</p>
         </div>
-        <div class="text-right mono text-[9px] text-zinc-500 space-y-1">
-            <p>GPU: <span id="gpu-val" class="text-white">--%</span></p>
-            <p>Q: <span id="q-val" class="text-white">--</span></p>
-            <p>UPTIME: <span id="uptime">00:00:00</span></p>
+        <div class="text-right text-[9px] text-zinc-600 uppercase">
+            <p>GPU_UTIL: <span id="gpu" class="text-white">--</span></p>
+            <p>STORAGE: <span id="q" class="text-white">--</span></p>
         </div>
     </header>
 
-    <!-- MAIN TRACK DISPLAY -->
-    <section class="mb-auto">
-        <div class="glass rounded-xl p-5 mb-6 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 p-3 opacity-20 group-hover:opacity-40 transition-opacity">
-                <svg width="40" height="40" fill="white" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
-            </div>
-            <p class="text-[9px] mono text-zinc-500 mb-2 uppercase">Current Sequence</p>
-            <div class="h-16 flex items-center">
-                <p id="track-name" class="text-lg font-bold leading-tight line-clamp-2 text-white">SYSTEM READY</p>
-            </div>
-            <div class="mt-4 flex gap-3">
-                <span class="text-[9px] bg-zinc-800 px-2 py-1 rounded text-zinc-300 mono">NVENC_P4</span>
-                <span class="text-[9px] bg-zinc-800 px-2 py-1 rounded text-zinc-300 mono">4000KBPS</span>
+    <main class="flex-grow flex flex-col justify-center">
+        <div class="b-v p-6 relative">
+            <div class="absolute -top-2 left-4 bg-black px-2 text-[8px] font-bold text-zinc-500 uppercase italic">Stream_Monitor</div>
+            <p id="track" class="text-xs font-bold leading-tight break-all uppercase">Awaiting_Instructions</p>
+            <div class="status-line mt-4 opacity-20" id="progress-bar" style="display:none;">
+                <div class="status-progress"></div>
             </div>
         </div>
+    </main>
+
+    <section class="grid grid-cols-3 gap-2 mb-4">
+        <button onclick="h('prev')" class="b-v py-8 flex justify-center items-center active:bg-zinc-900 transition-colors">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6L18 18V6z"/></svg>
+        </button>
+        <button onclick="tPlay()" id="p-btn" class="b-v py-8 flex justify-center items-center bg-white text-black active:scale-95 transition-transform">
+            <svg id="p-icon" width="24" height="24" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button onclick="h('next')" class="b-v py-8 flex justify-center items-center active:bg-zinc-900 transition-colors">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6z"/></svg>
+        </button>
     </section>
 
-    <!-- DEBUG LOG (ДЛЯ ТЕБЯ) -->
-    <div id="debug-log" class="mb-4 text-[8px] mono text-zinc-600 h-10 overflow-hidden border-t border-zinc-900 pt-2">
-        > SYSTEM_INIT...
-    </div>
-
-    <!-- CONTROLS -->
-    <section class="grid grid-cols-3 gap-3 h-20">
-        <button onclick="send('prev')" class="glass rounded-xl flex items-center justify-center active:bg-zinc-800 transition-colors">
-            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6L18 18V6z"/></svg>
-        </button>
-        
-        <button id="play-btn" onclick="togglePlay()" class="btn-main rounded-xl flex items-center justify-center">
-            <svg id="play-icon" width="28" height="28" fill="black" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-        </button>
-        
-        <button onclick="send('next')" class="glass rounded-xl flex items-center justify-center active:bg-zinc-800 transition-colors">
-            <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M16 18h2V6h-2v12zM6 18l8.5-6L6 6z"/></svg>
-        </button>
-    </section>
+    <footer id="log" class="text-[8px] text-zinc-800 mono h-8 overflow-hidden uppercase">
+        > Console_Ready
+    </footer>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.headerColor = '#050505';
-        tg.backgroundColor = '#050505';
+        tg.headerColor = '#000000';
 
-        // Инициализация
         const params = new URLSearchParams(window.location.search);
-        document.getElementById('gpu-val').innerText = (params.get('gpu') || '0') + '%';
-        document.getElementById('q-val').innerText = (params.get('q') || '0');
-        document.getElementById('track-name').innerText = params.get('track') || 'WAITING_FOR_CMD';
-        
-        let isPlaying = false;
-        const logDiv = document.getElementById('debug-log');
+        document.getElementById('gpu').innerText = (params.get('gpu') || '0') + '%';
+        document.getElementById('q').innerText = (params.get('q') || '0') + '_U';
+        document.getElementById('track').innerText = params.get('track') || 'STATION_IDLE';
 
-        function log(msg) {
-            logDiv.innerHTML = `> ${msg}<br>` + logDiv.innerHTML;
+        let playing = false;
+        function h(act) {
+            document.getElementById('log').innerText = `> EXECUTING_${act.toUpperCase()}...`;
+            tg.sendData(JSON.stringify({ action: act }));
+            tg.HapticFeedback.impactOccurred('medium');
         }
 
-        function togglePlay() {
-            isPlaying = !isPlaying;
-            const icon = document.getElementById('play-icon');
-            const dot = document.getElementById('status-dot');
-            const txt = document.getElementById('status-text');
-            
-            if (isPlaying) {
-                send('play');
+        function tPlay() {
+            playing = !playing;
+            const btn = document.getElementById('p-btn');
+            const icon = document.getElementById('p-icon');
+            const state = document.getElementById('state-text');
+            const prog = document.getElementById('progress-bar');
+
+            if(playing) {
+                h('play');
                 icon.innerHTML = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
-                dot.classList.remove('bg-red-500');
-                dot.classList.add('bg-green-500', 'blink');
-                txt.innerText = "BROADCASTING";
-                txt.classList.remove('text-red-500');
-                txt.classList.add('text-green-500');
+                btn.classList.replace('bg-white', 'border-white');
+                btn.classList.replace('text-black', 'text-white');
+                state.innerText = "System_Streaming";
+                state.classList.replace('text-zinc-600', 'text-white');
+                prog.style.display = 'block';
             } else {
-                send('stop');
+                h('stop');
                 icon.innerHTML = '<path d="M8 5v14l11-7z"/>';
-                dot.classList.add('bg-red-500');
-                dot.classList.remove('bg-green-500', 'blink');
-                txt.innerText = "OFFLINE";
-                txt.classList.add('text-red-500');
-                txt.classList.remove('text-green-500');
+                btn.classList.replace('border-white', 'bg-white');
+                btn.classList.replace('text-white', 'text-black');
+                state.innerText = "System_Standby";
+                state.classList.replace('text-white', 'text-zinc-600');
+                prog.style.display = 'none';
             }
         }
-
-        function send(action) {
-            log(`SENDING_ACTION: ${action}`);
-            try {
-                tg.sendData(JSON.stringify({ action: action }));
-                log(`DATA_SENT_OK`);
-            } catch (e) {
-                log(`ERR: ${e.message}`);
-            }
-        }
-
-        // Таймер аптайма
-        let seconds = 0;
-        setInterval(() => {
-            seconds++;
-            const date = new Date(0);
-            date.setSeconds(seconds);
-            document.getElementById('uptime').innerText = date.toISOString().substr(11, 8);
-        }, 1000);
     </script>
 </body>
 </html>
